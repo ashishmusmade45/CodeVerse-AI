@@ -1,6 +1,6 @@
 const aiService = require("../services/ai.service");
 
-module.exports.getResponse = async (req,res)=>{
+module.exports.getReview = async (req,res)=>{
     const prompt = req.body.prompt; 
 
     if(!prompt){
