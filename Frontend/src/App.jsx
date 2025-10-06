@@ -8,7 +8,11 @@ function App() {
 
   return (
     <>
-       
+      <div className="left">
+        <div className="code"></div>
+        <div className="review"></div>
+      </div>
+      <div className="right"></div>
     </>
   )
 }
