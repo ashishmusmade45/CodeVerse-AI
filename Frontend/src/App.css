@@ -1,36 +1,50 @@
-*{
-  margin:0%;
-  padding: 0%;
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 html,
 body,
-#root{
+#root {
   height: 100%;
   width: 100%;
 }
 
-main{
-  height: 100%;
-  width: 100%;
-  padding: 2.5rem;
-  display: flex;
-  gap:1rem;
-
+main {
+  height: 100vh;
+  width: 100vw;               
+  display: flex;              
+  justify-content: space-between;
+  align-items: stretch;       
+  gap: 1rem;
+  padding: 1.5rem;
 }
 
 main .left,
-main .right{
-    height: 50%;
-    flex-basis: 50%;
-    border-radius: 0.7rem;
+main .right {
+  flex: 1;                    
+  border-radius: 0.7rem;
+  height: 100%;
 }
 
-main .left{
+main .left {
   background-color: black;
+  position: relative;
+  flex-basis: 50%;
 }
 
-main .right{
-  background-color: rgb(197, 197, 197);
+main .left .review {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: rgb(193, 193, 252);
+  color: #000;
+  padding: 0.5rem 2rem;
+  border-radius: 0.7rem;
+}
+
+main .right {
+  background-color: rgb(150, 141, 141);
+  flex-basis: 50%;
 }
