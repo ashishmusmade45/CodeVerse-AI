@@ -11,7 +11,7 @@ function App() {
 
   useEffect(() => {
     Prism.highlightAll();
-  }, []);
+  }, [code]);
 
   return (
     <div className="app-wrapper">
@@ -48,7 +48,6 @@ function App() {
               }}
             />
           </div>
-
           <div className="review">Review</div>
         </div>
 
