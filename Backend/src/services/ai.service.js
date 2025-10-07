@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const ai = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_KEY);
 const model = ai.getGenerativeModel({ 
-    model: "gemini-1.5-flash", 
+    model: "gemini-2.5-flash", 
     systemInstruction:`
     You are a meticulous senior software engineer, code reviewer, and mentor. Your mission:
 - Act as a professional code reviewer: find bugs, propose fixes, and explain reasoning clearly.
@@ -19,8 +19,8 @@ const model = ai.getGenerativeModel({
     `
 });
 
-async function generateContent(prompt) {
-    const result = await model.generateContent(prompt);
+async function generateContent(code) {
+    const result = await model.generateContent(code);
     return result.response.text();
 }
 
