@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useState, useEffect } from "react";
 import "./App.css";
 import Prism from "prismjs";
@@ -23,7 +22,6 @@ function App() {
     try {
       const resp = await axios.post("http://localhost:3000/ai/get-review", { code });
 
-      // Normalize response into a string
       let reviewText = "";
       if (!resp || resp.status >= 400) {
         reviewText = `⚠️ Request failed: ${resp?.statusText || resp?.status}`;
@@ -33,7 +31,6 @@ function App() {
         else if (d && typeof d === "object") {
           if (typeof d.review === "string") reviewText = d.review;
           else {
-            // fallback stringify
             reviewText = JSON.stringify(d, null, 2);
           }
         } else {
@@ -41,7 +38,6 @@ function App() {
         }
       }
 
-      // further normalize to avoid objects leaking to UI
       if (reviewText.startsWith("{")) {
         try {
           const parsed = JSON.parse(reviewText);
@@ -49,7 +45,6 @@ function App() {
         } catch {}
       }
 
-      // Clean known artifacts
       reviewText = reviewText
         .replace(/\[object Object\]/g, "")
         .replace(/^---.*$/gm, "")
