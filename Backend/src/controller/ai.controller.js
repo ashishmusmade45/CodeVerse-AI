@@ -8,7 +8,6 @@ module.exports.getReview = async (req, res) => {
     }
 
     const result = await aiService(code);
-    // result should be { review: "..." }
     if (!result || !result.review) {
       return res.status(500).json({ error: "No review returned from AI" });
     }
