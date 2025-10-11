@@ -19,45 +19,40 @@ function App() {
 
   async function reviewCode() {
     setLoading(true);
+    setReview("");
+
     try {
       const resp = await axios.post("http://localhost:3000/ai/get-review", { code });
 
       let reviewText = "";
-      if (!resp || resp.status >= 400) {
-        reviewText = `⚠️ Request failed: ${resp?.statusText || resp?.status}`;
+      if (typeof resp.data === "string") {
+        reviewText = resp.data;
+      } else if (resp.data && typeof resp.data === "object") {
+        reviewText = resp.data.review || JSON.stringify(resp.data, null, 2);
       } else {
-        const d = resp.data;
-        if (typeof d === "string") reviewText = d;
-        else if (d && typeof d === "object") {
-          if (typeof d.review === "string") reviewText = d.review;
-          else {
-            reviewText = JSON.stringify(d, null, 2);
-          }
-        } else {
-          reviewText = String(d || "");
-        }
+        reviewText = String(resp.data);
       }
 
-      if (reviewText.startsWith("{")) {
-        try {
-          const parsed = JSON.parse(reviewText);
-          reviewText = parsed.review || JSON.stringify(parsed, null, 2);
-        } catch {}
-      }
-
-      reviewText = reviewText
+      reviewText = String(reviewText)
         .replace(/\[object Object\]/g, "")
         .replace(/^---.*$/gm, "")
         .replace(/^\+\+\+.*$/gm, "")
         .replace(/^@@.*$/gm, "")
         .trim();
 
-      if (!reviewText) reviewText = "⚠️ No review generated.";
+      const codePattern =
+        /(function\s+\w+\s*\(.*\)\s*\{[\s\S]*?\})|((const|let|var)\s+\w+\s*=\s*.*;?)/gm;
+      if (!reviewText.includes("```")) {
+        reviewText = reviewText.replace(codePattern, (match) => {
+          return `\n\`\`\`js\n${match.trim()}\n\`\`\`\n`;
+        });
+      }
 
+      if (!reviewText.trim()) reviewText = "⚠️ No review generated.";
       setReview(reviewText);
     } catch (err) {
-      console.error("Review request failed:", err);
-      setReview("⚠️ Failed to fetch review. Check your backend or API key. See console for details.");
+      console.error("❌ Review request failed:", err);
+      setReview("⚠️ Failed to fetch review. Check your backend or API key.");
     } finally {
       setLoading(false);
     }
@@ -110,14 +105,18 @@ function App() {
           <div
             onClick={() => !loading && reviewCode()}
             className={`review ${loading ? "disabled" : ""}`}
-            role="button"
           >
-            {loading ? "Reviewing..." : "Review"}
+            {loading ? "Analyzing..." : "Review"}
           </div>
         </div>
 
         <div className="right">
-          {review ? (
+          {loading ? (
+            <div className="loading-container">
+              <div className="spinner"></div>
+              <p className="loading-text">Analyzing your code... Please wait</p>
+            </div>
+          ) : review ? (
             <div className="review-content">
               <div className="review-header">
                 <h2>AI Code Review</h2>
