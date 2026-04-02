@@ -26,12 +26,16 @@ const model = ai.getGenerativeModel({
 });
 
 
-async function generateContent(code) {
+async function generateContent(code, promptText) {
   if (!code) throw new Error("No code provided to AI service");
 
   try {
     console.log("🧠 Sending code to Gemini API...");
-    const result = await model.generateContent(code);
+    const finalMessage = promptText 
+      ? `User Instructions: ${promptText}\n\nCode to analyze:\n${code}`
+      : code;
+      
+    const result = await model.generateContent(finalMessage);
 
     let raw = "";
     if (result && typeof result.response?.text === "function") {

@@ -148,6 +148,30 @@
   justify-content: flex-end;
 }
 
+.prompt-container {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.prompt-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  padding: 0.55rem 0.75rem;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prompt-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5);
+}
+
 /* ——— Editor ——— */
 .editor-shell {
   flex: 1;
@@ -162,6 +186,15 @@
   height: 100%;
   min-height: 200px;
   overflow: auto;
+}
+
+/* FIX: Prevent Prism Theme CSS from adding margins/padding that misalign the textarea */
+.panel-editor .code pre[class*="language-"],
+.panel-editor .code code[class*="language-"] {
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .panel-editor .code::-webkit-scrollbar {

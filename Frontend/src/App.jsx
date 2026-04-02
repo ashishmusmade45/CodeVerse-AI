@@ -87,20 +87,17 @@ function formatReviewError(err) {
 }
 
 const EDITOR_STYLE = {
-  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-  fontSize: 14,
+  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+  fontSize: 15,
   color: "#e2e8f0",
+  minHeight: "100%",
   backgroundColor: "transparent",
-  height: "100%",
-  width: "100%",
-  border: "none",
-  outline: "none",
-  overflowY: "auto",
   lineHeight: 1.65,
   caretColor: "#22d3ee",
 };
 
 function App() {
+  const [promptText, setPromptText] = useState("Review my code and find any bugs.");
   const [code, setCode] = useState(`function sum() {\n  return 1 + 1;\n}`);
   const [review, setReview] = useState("");
   const [loading, setLoading] = useState(false);
@@ -115,7 +112,7 @@ function App() {
     setReview("");
 
     try {
-      const resp = await axios.post(getReviewUrl(), { code });
+      const resp = await axios.post(getReviewUrl(), { prompt: promptText, code });
 
       let reviewText = "";
       if (typeof resp.data === "string") {
@@ -180,6 +177,14 @@ function App() {
           <div className="panel-head">
             <span className="panel-title">Editor</span>
             <span className="panel-meta">JavaScript</span>
+          </div>
+          <div className="prompt-container">
+            <input 
+              className="prompt-input" 
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              placeholder="e.g. Find the bug in my logic or focus on time complexity..."
+            />
           </div>
           <div className="editor-shell">
             <div className="code">

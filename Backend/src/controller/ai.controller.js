@@ -3,11 +3,12 @@ const aiService = require("../services/ai.service");
 module.exports.getReview = async (req, res) => {
   try {
     const code = req.body?.code;
+    const prompt = req.body?.prompt;
     if (!code) {
       return res.status(400).json({ error: "code is required in request body" });
     }
 
-    const result = await aiService(code);
+    const result = await aiService(code, prompt);
     if (!result || !result.review) {
       return res.status(500).json({ error: "No review returned from AI" });
     }
