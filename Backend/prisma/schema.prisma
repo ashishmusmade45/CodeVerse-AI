@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -13,7 +12,6 @@ model User {
   email       String   @unique
   createdAt   DateTime @default(now())
 
-  // A user can have many prompts
   prompts     Prompt[]
 }
 
@@ -25,7 +23,6 @@ model Prompt {
   promptText  String
   createdAt   DateTime @default(now())
 
-  // 1-to-1: One prompt contains exactly one code submission and one AI answer
   submission  CodeSubmission?
   aiResponse  AiResponse?
 }
