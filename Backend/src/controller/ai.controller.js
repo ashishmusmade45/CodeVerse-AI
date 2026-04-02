@@ -14,6 +14,10 @@ module.exports.getReview = async (req, res) => {
     return res.json(result);
   } catch (err) {
     console.error("Controller Error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    const message =
+      err?.message && typeof err.message === "string"
+        ? err.message
+        : "Internal server error";
+    return res.status(500).json({ error: message });
   }
 };
