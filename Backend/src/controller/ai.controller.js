@@ -4,8 +4,7 @@ const { clerkClient } = require("@clerk/express");
 
 module.exports.getReview = async (req, res) => {
   try {
-
-    const { code, prompt } = req.body;
+    const { code, prompt, language } = req.body;
     const { userId } = req.auth(); 
 
     if (!code) {
@@ -22,21 +21,22 @@ module.exports.getReview = async (req, res) => {
       return res.status(500).json({ error: "No review returned from AI" });
     }
 
-    await db.user.upsert({
-      where: { clerkUserId: userId },
-      update: { email },
-      create: { 
-        clerkUserId: userId, 
-        email 
-      }
-    });
+    const user = await db.user.findUnique({ where: { clerkUserId: userId } });
+    if (!user) {
+        await db.user.create({
+            data: { clerkUserId: userId, email }
+        });
+    }
 
     await db.prompt.create({
       data: {
         userId: (await db.user.findUnique({ where: { clerkUserId: userId } })).id,
         promptText: prompt || "Review my code",
         submission: {
-          create: { sourceCode: code, language: "javascript" }
+          create: { 
+            sourceCode: code, 
+            language: language || "javascript" 
+          }
         },
         aiResponse: {
           create: { reviewText: reviewText }

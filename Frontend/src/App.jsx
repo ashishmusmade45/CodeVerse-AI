@@ -9,6 +9,15 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
+// Add Prism language components (Order is important for dependencies)
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-cpp";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-markdown";
+import "prismjs/components/prism-bash";
+
 
 /** In dev, use Vite proxy (`/ai` → localhost:3000). Set `VITE_API_URL` when the API is on another origin. */
 function getReviewUrl() {
@@ -104,6 +113,16 @@ function App() {
   const [review, setReview] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [language, setLanguage] = useState("javascript"); // Default language
+
+  const languages = [
+    { label: "JavaScript", value: "javascript" },
+    { label: "Python", value: "python" },
+    { label: "C++", value: "cpp" },
+    { label: "Java", value: "java" },
+    { label: "HTML", value: "html" },
+    { label: "CSS", value: "css" },
+  ];
 
   const {getToken} = useAuth();
 
@@ -119,8 +138,12 @@ function App() {
       const token = await getToken();
       const resp = await axios.post(
         getReviewUrl(), 
-        { prompt: promptText, code },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { prompt: promptText, code, language },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
 
@@ -203,7 +226,15 @@ function App() {
         <section className="panel panel-editor" aria-label="Code editor">
           <div className="panel-head">
             <span className="panel-title">Editor</span>
-            <span className="panel-meta">JavaScript</span>
+            <select 
+              className="lang-selector" 
+              value={language} 
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              {languages.map((l) => (
+                <option key={l.value} value={l.value}>{l.label}</option>
+              ))}
+            </select>
           </div>
           <div className="prompt-container">
             <input 
@@ -218,7 +249,7 @@ function App() {
               <Editor
                 value={code}
                 onValueChange={(val) => setCode(val)}
-                highlight={(c) => Prism.highlight(c, Prism.languages.javascript, "javascript")}
+                highlight={(c) => Prism.highlight(c, Prism.languages[language] || Prism.languages.javascript, language)}
                 padding={20}
                 style={EDITOR_STYLE}
               />

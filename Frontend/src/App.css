@@ -128,15 +128,30 @@
   color: var(--text-secondary);
 }
 
-.panel-meta {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  padding: 0.15rem 0.5rem;
+.lang-selector {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-subtle);
+  padding: 0.25rem 0.75rem;
   border-radius: 6px;
-  background: rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  outline: none;
+  cursor: pointer;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  transition: all 0.2s ease;
+  color-scheme: dark;
+}
+
+.lang-selector:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--text-primary);
+}
+
+.lang-selector:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
 }
 
 .panel-footer {
