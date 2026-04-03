@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
-// Add Prism language components (Order is important for dependencies)
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-c";
 import "prismjs/components/prism-cpp";
@@ -19,7 +18,6 @@ import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-bash";
 
 
-/** In dev, use Vite proxy (`/ai` → localhost:3000). Set `VITE_API_URL` when the API is on another origin. */
 function getReviewUrl() {
   const base = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
   return base ? `${base}/ai/get-review` : "/ai/get-review";
@@ -207,7 +205,7 @@ function App() {
             AI code review
           </p>
 
-          {/* CLERK MAGIC HAPPENS HERE */}
+        
           <div className="auth-buttons">
             <SignedOut>
               <SignInButton mode="modal">
