@@ -15,9 +15,11 @@
     "@clerk/express": "^2.0.8",
     "@google/genai": "^1.22.0",
     "@google/generative-ai": "^0.24.1",
+    "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "dotenv": "^17.4.0",

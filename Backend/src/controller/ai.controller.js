@@ -1,24 +1,55 @@
 const aiService = require("../services/ai.service");
+const db = require("../db");
+const { clerkClient } = require("@clerk/express"); 
 
 module.exports.getReview = async (req, res) => {
   try {
-    const code = req.body?.code;
-    const prompt = req.body?.prompt;
+
+    const { code, prompt } = req.body;
+    const { userId } = req.auth(); 
+
     if (!code) {
-      return res.status(400).json({ error: "code is required in request body" });
+      return res.status(400).json({ error: "code is required" });
     }
 
+    const clerkUser = await clerkClient.users.getUser(userId);
+    const email = clerkUser.emailAddresses[0]?.emailAddress || "no-email@clerk.com";
+
     const result = await aiService(code, prompt);
-    if (!result || !result.review) {
+    const reviewText = result.review;
+
+    if (!reviewText) {
       return res.status(500).json({ error: "No review returned from AI" });
     }
+
+    await db.user.upsert({
+      where: { clerkUserId: userId },
+      update: { email },
+      create: { 
+        clerkUserId: userId, 
+        email 
+      }
+    });
+
+    await db.prompt.create({
+      data: {
+        userId: (await db.user.findUnique({ where: { clerkUserId: userId } })).id,
+        promptText: prompt || "Review my code",
+        submission: {
+          create: { sourceCode: code, language: "javascript" }
+        },
+        aiResponse: {
+          create: { reviewText: reviewText }
+        }
+      }
+    });
+
     return res.json(result);
+
   } catch (err) {
-    console.error("Controller Error:", err);
-    const message =
-      err?.message && typeof err.message === "string"
-        ? err.message
-        : "Internal server error";
-    return res.status(500).json({ error: message });
+    console.error("Database or AI Error:", err);
+    return res.status(500).json({ 
+      error: err?.message || "Internal server error during processing" 
+    });
   }
 };
