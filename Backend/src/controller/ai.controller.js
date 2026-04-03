@@ -54,3 +54,32 @@ module.exports.getReview = async (req, res) => {
   }
 };
 
+module.exports.getHistory = async (req, res) => {
+  try {
+    const { userId } = req.auth(); 
+
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) {
+      return res.json({ history: [] });
+    }
+
+    const history = await db.prompt.findMany({
+      where: { userId: user.id },
+      include: {
+        submission: true,
+        aiResponse: true,
+      },
+      orderBy: {
+        createdAt: "desc", 
+      },
+    });
+
+    return res.json({ history });
+  } catch (err) {
+    console.error("Error fetching history:", err);
+    return res.status(500).json({ error: "Failed to fetch your review history" });
+  }
+};
