@@ -7,7 +7,7 @@ import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
 
 /** In dev, use Vite proxy (`/ai` → localhost:3000). Set `VITE_API_URL` when the API is on another origin. */
@@ -105,6 +105,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const {getToken} = useAuth();
+
   useEffect(() => {
     Prism.highlightAll();
   }, [code]);
@@ -114,7 +116,13 @@ function App() {
     setReview("");
 
     try {
-      const resp = await axios.post(getReviewUrl(), { prompt: promptText, code });
+      const token = await getToken();
+      const resp = await axios.post(
+        getReviewUrl(), 
+        { prompt: promptText, code },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
 
       let reviewText = "";
       if (typeof resp.data === "string") {
