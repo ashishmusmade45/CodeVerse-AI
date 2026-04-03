@@ -7,6 +7,8 @@ import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+
 
 /** In dev, use Vite proxy (`/ai` → localhost:3000). Set `VITE_API_URL` when the API is on another origin. */
 function getReviewUrl() {
@@ -163,12 +165,29 @@ function App() {
     <div className="app-wrapper">
       <header className="navbar" role="banner">
         <div className="navbar-inner">
+          
           <div className="brand">
             <span className="brand-mark" aria-hidden="true" />
             <span className="brand-name">CodeVerse</span>
             <span className="brand-suffix">AI</span>
           </div>
-          <p className="tagline">AI code review</p>
+
+          <p className="tagline" style={{ marginRight: 'auto', marginLeft: '1rem' }}>
+            AI code review
+          </p>
+
+          {/* CLERK MAGIC HAPPENS HERE */}
+          <div className="auth-buttons">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="btn-primary">Sign In</button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
+
         </div>
       </header>
 
