@@ -17,10 +17,14 @@ import "prismjs/components/prism-java";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-bash";
 
-
 function getReviewUrl() {
   const base = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
   return base ? `${base}/ai/get-review` : "/ai/get-review";
+}
+
+function getHistoryUrl() {
+    const base = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+    return base ? `${base}/ai/get-history` : "/ai/get-history";
 }
 
 function backendUnreachableHelp() {
@@ -111,7 +115,8 @@ function App() {
   const [review, setReview] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [language, setLanguage] = useState("javascript"); // Default language
+  const [language, setLanguage] = useState("javascript");
+  const [history, setHistory] = useState([]);
 
   const languages = [
     { label: "JavaScript", value: "javascript" },
@@ -124,9 +129,34 @@ function App() {
 
   const {getToken} = useAuth();
 
+  // Function to fetch your history
+  async function fetchHistory() {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const resp = await axios.get(getHistoryUrl(), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setHistory(resp.data.history || []);
+    } catch (err) {
+      console.error("Failed to fetch history:", err);
+    }
+  }
+
+  useEffect(() => {
+    fetchHistory();
+  }, [getToken]);
+
   useEffect(() => {
     Prism.highlightAll();
-  }, [code]);
+  }, [code, language]);
+
+  const loadHistoryItem = (item) => {
+    setPromptText(item.promptText);
+    setCode(item.submission?.sourceCode || "");
+    setLanguage(item.submission?.language || "javascript");
+    setReview(item.aiResponse?.reviewText || "");
+  };
 
   async function reviewCode() {
     setLoading(true);
@@ -137,13 +167,8 @@ function App() {
       const resp = await axios.post(
         getReviewUrl(), 
         { prompt: promptText, code, language },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
 
       let reviewText = "";
       if (typeof resp.data === "string") {
@@ -170,7 +195,10 @@ function App() {
       }
 
       if (!reviewText.trim()) reviewText = "No review was returned. Try again or check your prompt.";
+      
       setReview(reviewText);
+      fetchHistory(); 
+
     } catch (err) {
       console.error("Review request failed:", err);
       setReview(formatReviewError(err));
@@ -194,18 +222,14 @@ function App() {
     <div className="app-wrapper">
       <header className="navbar" role="banner">
         <div className="navbar-inner">
-          
           <div className="brand">
             <span className="brand-mark" aria-hidden="true" />
             <span className="brand-name">CodeVerse</span>
             <span className="brand-suffix">AI</span>
           </div>
-
           <p className="tagline" style={{ marginRight: 'auto', marginLeft: '1rem' }}>
             AI code review
           </p>
-
-        
           <div className="auth-buttons">
             <SignedOut>
               <SignInButton mode="modal">
@@ -216,130 +240,131 @@ function App() {
               <UserButton />
             </SignedIn>
           </div>
-
         </div>
       </header>
 
-      <main className="main">
-        <section className="panel panel-editor" aria-label="Code editor">
-          <div className="panel-head">
-            <span className="panel-title">Editor</span>
-            <select 
-              className="lang-selector" 
-              value={language} 
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              {languages.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
+      <div className="content-layout">
+        {/* SIDEBAR COMPONENT */}
+        <aside className="sidebar">
+          <div className="sidebar-head">
+            <h2 className="sidebar-title">Recent Reviews</h2>
           </div>
-          <div className="prompt-container">
-            <input 
-              className="prompt-input" 
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              placeholder="e.g. Find the bug in my logic or focus on time complexity..."
-            />
+          <div className="history-list">
+            {history.length > 0 ? (
+              history.map((item) => (
+                <button 
+                  key={item.id} 
+                  className="history-item" 
+                  onClick={() => loadHistoryItem(item)}
+                >
+                  <div className="history-item-meta">
+                     <span className="history-item-badge">{item.submission?.language}</span>
+                     <span className="history-item-date">{new Date(item.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="history-item-prompt">{item.promptText}</p>
+                </button>
+              ))
+            ) : (
+              <div className="sidebar-empty">
+                 <p>History will appear here</p>
+              </div>
+            )}
           </div>
-          <div className="editor-shell">
-            <div className="code">
-              <Editor
-                value={code}
-                onValueChange={(val) => setCode(val)}
-                highlight={(c) => Prism.highlight(c, Prism.languages[language] || Prism.languages.javascript, language)}
-                padding={20}
-                style={EDITOR_STYLE}
+        </aside>
+
+        <main className="main">
+          <section className="panel panel-editor" aria-label="Code editor">
+            <div className="panel-head">
+              <span className="panel-title">Editor</span>
+              <select className="lang-selector" value={language} onChange={(e) => setLanguage(e.target.value)}>
+                {languages.map((l) => (
+                  <option key={l.value} value={l.value}>{l.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="prompt-container">
+              <input 
+                className="prompt-input" 
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="e.g. Find the bug in my logic or focus on time complexity..."
               />
             </div>
-          </div>
-          <div className="panel-footer">
-            <button
-              type="button"
-              className={`btn-primary ${loading ? "is-loading" : ""}`}
-              onClick={() => !loading && reviewCode()}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="btn-spinner" aria-hidden="true" />
-                  Analyzing…
-                </>
-              ) : (
-                <>
-                  <svg className="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"
-                      stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  Run review
-                </>
-              )}
-            </button>
-          </div>
-        </section>
-
-        <section className="panel panel-review" aria-label="AI review output">
-          <div className="panel-head">
-            <span className="panel-title">Review</span>
-            {review && !loading && (
-              <button type="button" className="btn-ghost" onClick={copyReview}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path
-                    d="M6 15H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                {copied ? "Copied" : "Copy"}
+            <div className="editor-shell">
+              <div className="code">
+                <Editor
+                  value={code}
+                  onValueChange={(val) => setCode(val)}
+                  highlight={(c) => Prism.highlight(c, Prism.languages[language] || Prism.languages.javascript, language)}
+                  padding={20}
+                  style={EDITOR_STYLE}
+                />
+              </div>
+            </div>
+            <div className="panel-footer">
+              <button type="button" className={`btn-primary ${loading ? "is-loading" : ""}`} onClick={() => !loading && reviewCode()} disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="btn-spinner" aria-hidden="true" />
+                    Analyzing…
+                  </>
+                ) : (
+                  <>
+                    <svg className="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
+                    </svg>
+                    Run review
+                  </>
+                )}
               </button>
-            )}
-          </div>
+            </div>
+          </section>
 
-          <div className="review-scroll">
-            {loading ? (
-              <div className="loading-container">
-                <div className="spinner" role="status" aria-label="Loading" />
-                <p className="loading-title">Analyzing your code</p>
-                <p className="loading-text">This may take a few seconds.</p>
-              </div>
-            ) : review ? (
-              <article className="review-body markdown-body">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                  {review}
-                </ReactMarkdown>
-              </article>
-            ) : (
-              <div className="empty-state">
-                <div className="empty-icon" aria-hidden="true">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 3L4 7v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V7l-8-4z"
-                      stroke="url(#g)"
-                      strokeWidth="1.25"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M12 8v4l2 2" stroke="url(#g)" strokeWidth="1.25" strokeLinecap="round" />
-                    <defs>
-                      <linearGradient id="g" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#6366f1" />
-                        <stop offset="1" stopColor="#22d3ee" />
-                      </linearGradient>
-                    </defs>
+          <section className="panel panel-review" aria-label="AI review output">
+            <div className="panel-head">
+              <span className="panel-title">Review</span>
+              {review && !loading && (
+                <button type="button" className="btn-ghost" onClick={copyReview}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M6 15H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v1" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              )}
+            </div>
+            <div className="review-scroll">
+              {loading ? (
+                <div className="loading-container">
+                  <div className="spinner" role="status" aria-label="Loading" />
+                  <p className="loading-title">Analyzing your code</p>
+                  <p className="loading-text">This may take a few seconds.</p>
                 </div>
-                <p className="empty-title">Ready when you are</p>
-                <p className="empty-desc">Paste or edit code, then run a review to see structured AI feedback here.</p>
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
+              ) : review ? (
+                <article className="review-body markdown-body">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                    {review}
+                  </ReactMarkdown>
+                </article>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon" aria-hidden="true">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3L4 7v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V7l-8-4z" stroke="url(#g)" strokeWidth="1.25" strokeLinejoin="round" />
+                      <path d="M12 8v4l2 2" stroke="url(#g)" strokeWidth="1.25" strokeLinecap="round" />
+                      <defs>
+                        <linearGradient id="g" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse"><stop stopColor="#6366f1" /><stop offset="1" stopColor="#22d3ee" /></linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <p className="empty-title">Ready when you are</p>
+                  <p className="empty-desc">Paste or edit code, then run a review to see structured AI feedback here.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
