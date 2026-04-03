@@ -7,7 +7,7 @@ import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth, useClerk } from "@clerk/clerk-react";
 
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-c";
@@ -128,7 +128,8 @@ function App() {
     { label: "CSS", value: "css" },
   ];
 
-  const {getToken} = useAuth();
+  const { getToken, isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
 
   async function fetchHistory() {
     try {
@@ -144,8 +145,13 @@ function App() {
   }
 
   useEffect(() => {
-    fetchHistory();
-  }, [getToken]);
+    if (isSignedIn) {
+      fetchHistory();
+    } else {
+      setHistory([]);
+      setShowHistory(false);
+    }
+  }, [isSignedIn, getToken]);
 
   const loadHistoryItem = (item) => {
     setPromptText(item.promptText);
@@ -162,6 +168,11 @@ function App() {
   };
 
   async function reviewCode() {
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+    
     setLoading(true);
     setReview("");
 
@@ -247,7 +258,7 @@ function App() {
       </header>
 
       <div className="content-layout">
-        <aside className={`sidebar ${showHistory ? 'is-open' : 'is-closed'}`}>
+        <aside className={`sidebar ${showHistory && isSignedIn ? 'is-open' : 'is-closed'}`}>
           <div className="sidebar-inner">
             <button className="btn-new-chat" onClick={resetEditor}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -277,7 +288,7 @@ function App() {
         </aside>
 
         <main className="main">
-          <SignedIn>
+          {isSignedIn && (
             <button 
               className={`btn-history-top-toggle ${showHistory ? 'is-active' : ''}`}
               onClick={() => setShowHistory(!showHistory)}
@@ -288,7 +299,7 @@ function App() {
                 <path d="M9 3v18" />
               </svg>
             </button>
-          </SignedIn>
+          )}
 
           <section className="panel panel-editor" aria-label="Code editor">
             <div className="panel-head">
@@ -319,21 +330,27 @@ function App() {
               </div>
             </div>
             <div className="panel-footer">
-              <button type="button" className={`btn-primary ${loading ? "is-loading" : ""}`} onClick={() => !loading && reviewCode()} disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="btn-spinner" aria-hidden="true" />
-                    Analyzing…
-                  </>
-                ) : (
-                  <>
-                    <svg className="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
-                    </svg>
-                    Run review
-                  </>
-                )}
-              </button>
+              {!isSignedIn ? (
+                <button type="button" className="btn-primary" onClick={() => openSignIn()}>
+                  Sign in to review
+                </button>
+              ) : (
+                <button type="button" className={`btn-primary ${loading ? "is-loading" : ""}`} onClick={() => !loading && reviewCode()} disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner" aria-hidden="true" />
+                      Analyzing…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
+                      </svg>
+                      Run review
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </section>
 
@@ -351,7 +368,20 @@ function App() {
               )}
             </div>
             <div className="review-scroll">
-              {loading ? (
+              {!isSignedIn ? (
+                <div className="empty-state">
+                  <div className="empty-icon" aria-hidden="true">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                      <circle cx="8.5" cy="7" r="4" />
+                      <path d="M20 8v6M23 11h-6" />
+                    </svg>
+                  </div>
+                  <p className="empty-title">Authentication required</p>
+                  <p className="empty-desc">Please sign in to analyze your code and save your history.</p>
+                  <button className="btn-ghost" style={{ marginTop: '1rem' }} onClick={() => openSignIn()}>Sign In Now</button>
+                </div>
+              ) : loading ? (
                 <div className="loading-container">
                   <div className="spinner" role="status" aria-label="Loading" />
                   <p className="loading-title">Analyzing your code</p>
