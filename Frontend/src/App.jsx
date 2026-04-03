@@ -117,6 +117,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [language, setLanguage] = useState("javascript");
   const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const languages = [
     { label: "JavaScript", value: "javascript" },
@@ -129,7 +130,6 @@ function App() {
 
   const {getToken} = useAuth();
 
-  // Function to fetch your history
   async function fetchHistory() {
     try {
       const token = await getToken();
@@ -147,15 +147,18 @@ function App() {
     fetchHistory();
   }, [getToken]);
 
-  useEffect(() => {
-    Prism.highlightAll();
-  }, [code, language]);
-
   const loadHistoryItem = (item) => {
     setPromptText(item.promptText);
     setCode(item.submission?.sourceCode || "");
     setLanguage(item.submission?.language || "javascript");
     setReview(item.aiResponse?.reviewText || "");
+  };
+
+  const resetEditor = () => {
+    setPromptText("Review my code and find any bugs.");
+    setCode(`function sum() {\n  return 1 + 1;\n}`);
+    setReview("");
+    setLanguage("javascript");
   };
 
   async function reviewCode() {
@@ -231,48 +234,62 @@ function App() {
             AI code review
           </p>
           <div className="auth-buttons">
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
             <SignedOut>
               <SignInButton mode="modal">
                 <button className="btn-primary">Sign In</button>
               </SignInButton>
             </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
           </div>
         </div>
       </header>
 
       <div className="content-layout">
-        {/* SIDEBAR COMPONENT */}
-        <aside className="sidebar">
-          <div className="sidebar-head">
-            <h2 className="sidebar-title">Recent Reviews</h2>
-          </div>
-          <div className="history-list">
-            {history.length > 0 ? (
-              history.map((item) => (
-                <button 
-                  key={item.id} 
-                  className="history-item" 
-                  onClick={() => loadHistoryItem(item)}
-                >
-                  <div className="history-item-meta">
-                     <span className="history-item-badge">{item.submission?.language}</span>
-                     <span className="history-item-date">{new Date(item.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <p className="history-item-prompt">{item.promptText}</p>
-                </button>
-              ))
-            ) : (
-              <div className="sidebar-empty">
-                 <p>History will appear here</p>
+        <aside className={`sidebar ${showHistory ? 'is-open' : 'is-closed'}`}>
+          <div className="sidebar-inner">
+            <button className="btn-new-chat" onClick={resetEditor}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              New Review
+            </button>
+            <div className="history-section">
+              <h3 className="section-label">History</h3>
+              <div className="history-list">
+                {history.length > 0 ? (
+                  history.map((item) => (
+                    <button 
+                      key={item.id} 
+                      className="history-link" 
+                      onClick={() => loadHistoryItem(item)}
+                    >
+                      {item.promptText}
+                    </button>
+                  ))
+                ) : (
+                  <p className="history-empty">No reviews yet</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </aside>
 
         <main className="main">
+          <SignedIn>
+            <button 
+              className={`btn-history-top-toggle ${showHistory ? 'is-active' : ''}`}
+              onClick={() => setShowHistory(!showHistory)}
+              title="Toggle History"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18" />
+              </svg>
+            </button>
+          </SignedIn>
+
           <section className="panel panel-editor" aria-label="Code editor">
             <div className="panel-head">
               <span className="panel-title">Editor</span>
