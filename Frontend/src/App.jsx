@@ -16,6 +16,16 @@ import "prismjs/components/prism-python";
 import "prismjs/components/prism-java";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-bash";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-sql";
+import "prismjs/components/prism-csharp";
+import "prismjs/components/prism-go";
+import "prismjs/components/prism-rust";
+import "prismjs/components/prism-markup-templating";
+import "prismjs/components/prism-php";
+import "prismjs/components/prism-ruby";
+import "prismjs/components/prism-swift";
+import "prismjs/components/prism-kotlin";
 
 function getReviewUrl() {
   const base = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
@@ -121,11 +131,21 @@ function App() {
 
   const languages = [
     { label: "JavaScript", value: "javascript" },
+    { label: "TypeScript", value: "typescript" },
     { label: "Python", value: "python" },
-    { label: "C++", value: "cpp" },
+    { label: "SQL", value: "sql" },
     { label: "Java", value: "java" },
+    { label: "C++", value: "cpp" },
+    { label: "C#", value: "csharp" },
+    { label: "Go", value: "go" },
+    { label: "Rust", value: "rust" },
+    { label: "PHP", value: "php" },
+    { label: "Ruby", value: "ruby" },
+    { label: "Swift", value: "swift" },
+    { label: "Kotlin", value: "kotlin" },
     { label: "HTML", value: "html" },
     { label: "CSS", value: "css" },
+    { label: "Shell", value: "bash" },
   ];
 
   const { getToken, isSignedIn } = useAuth();
