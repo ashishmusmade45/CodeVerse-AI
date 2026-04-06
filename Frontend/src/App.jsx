@@ -212,6 +212,7 @@ function App() {
       } else {
         reviewText = String(resp.data);
       }
+
       reviewText = String(reviewText)
         .replace(/\[object Object\]/g, "")
         .replace(/^---.*$/gm, "")
@@ -240,6 +241,16 @@ function App() {
     }
   }
 
+  const copyReview = async () => {
+    if (!review) return;
+    try {
+      await navigator.clipboard.writeText(review);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div className="app-wrapper">
