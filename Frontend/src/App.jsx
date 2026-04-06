@@ -240,16 +240,6 @@ function App() {
     }
   }
 
-  const copyReview = async () => {
-    if (!review) return;
-    try {
-      await navigator.clipboard.writeText(review);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
 
   return (
     <div className="app-wrapper">
