@@ -212,7 +212,6 @@ function App() {
       } else {
         reviewText = String(resp.data);
       }
-
       reviewText = String(reviewText)
         .replace(/\[object Object\]/g, "")
         .replace(/^---.*$/gm, "")
